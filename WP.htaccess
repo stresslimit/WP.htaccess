@@ -1,0 +1,88 @@
+#######################
+# php settings
+
+# do not display php errors which can give system and path info
+php_value display_errors 0
+
+# uncomment for development
+# php_value error_reporting 2047
+# php_value display_errors 1
+
+
+
+#######################
+# some basic security
+
+# don't show directory listings
+Options All -Indexes
+# <FilesMatch ^wp-config.php$>deny from all</FilesMatch> # not sure this works
+
+# allow inter-site communication
+<FilesMatch "(async-upload\.php|wp-cron\.php|xmlrpc\.php)$">
+    Satisfy Any
+    Order allow,deny
+    Allow from all
+    Deny from none
+</FilesMatch>
+
+
+
+#######################
+# filetypes and encoding
+
+# use utf-8 encoding for anything served text/plain or text/html
+AddDefaultCharset utf-8
+
+# force utf-8 for a number of file formats
+AddCharset utf-8 .html .css .js .xml .json .rss
+
+# video
+AddType video/ogg  ogg ogv
+AddType video/mp4  mp4
+AddType video/x-m4v  m4v
+AddType video/webm webm
+
+# webfonts
+AddType application/vnd.ms-fontobject eot
+AddType font/ttf                      ttf
+AddType font/otf                      otf
+AddType font/x-woff                   woff
+# Proper svg serving. Required for svg webfonts on older iPads
+AddType image/svg+xml                 svg svgz
+
+
+
+#######################
+# mod_rewrite
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+#insert custom rewrites here
+#RewriteCond ^some-old-url/?$ /some-new-url [R=301,L]
+
+# Block the include-only files.
+RewriteRule ^wp-admin/includes/ - [F,L]
+RewriteRule !^wp-includes/ - [S=3]
+RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
+RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
+RewriteRule ^wp-includes/theme-compat/ - [F,L]
+
+# disallow some basic hacking attempts
+RewriteCond %{QUERY_STRING} (\<|%3C|"|%22) [NC,OR]
+RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2})
+RewriteRule ^(.*)$ index.php [F,L]
+
+# remove www
+RewriteCond %{HTTP_HOST} ^www\.(.+)$
+RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
+# BEGIN WordPress
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+# END WordPress
+
+</IfModule>
